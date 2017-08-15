@@ -27,29 +27,18 @@ contract OnlineCinema {
         }
     }
 
-    function payForMovie(string _url) returns (bool) {
+    function buyMovie(string _url) payable {
         MovieRegistry movieRegistry = MovieRegistry(movieRegistryAddress);
-
-        if (usersToPayedMovies[msg.sender][_url]) {
-            return true;
-        }
-
         address movieOwner = movieRegistry.getMovieOwner(_url);
+        uint moviePrice = movieRegistry.getMoviePrice(_url);
 
-        if (movieOwner != address(0)) {
-            uint moviePrice = movieRegistry.getMoviePrice(_url);
-            if (msg.sender.balance >= moviePrice) {
-                movieOwner.transfer(moviePrice);
-                usersToPayedMovies[msg.sender][_url] = true;
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    function getMovieOwner(string _url) constant returns (address) {
-        MovieRegistry movieRegistry = MovieRegistry(movieRegistryAddress);
-        return movieRegistry.getMovieOwner(_url);
+        require(!usersToPayedMovies[msg.sender][_url]);
+        require(movieOwner != address(0));
+        require(msg.sender.balance >= moviePrice);
+
+        usersToPayedMovies[msg.sender][_url] = true;
+
+        movieOwner.transfer(moviePrice);
     }
 
     function canWatchMovie(string _url, address _address) constant returns (bool) {
